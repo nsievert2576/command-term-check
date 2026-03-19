@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Term Analyser</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3248;
+    --text: #e8eaf0;
+    --text-muted: #8890a8;
+    --accent: #4f6ef7;
+
+    --identify:   #f5c842;
+    --outline:    #52d68a;
+    --describe:   #5bc8f5;
+    --explain:    #f08050;
+    --analyse:    #b57cf7;
+    --discuss:    #f76fa8;
+    --assess:     #e040fb;
+    --compare:    #42d4c8;
+    --evaluate:   #e84545;
+    --examine:    #a8d848;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+
+  header { text-align: center; margin-bottom: 28px; }
+  header p { color: var(--text-muted); font-size: 0.95rem; font-weight: 300; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+  .legend-item:hover { transform: translateY(-2px); }
+
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .dot.identify  { background: var(--identify); }
+  .dot.outline   { background: var(--outline); }
+  .dot.describe  { background: var(--describe); }
+  .dot.explain   { background: var(--explain); }
+  .dot.analyse   { background: var(--analyse); }
+  .dot.discuss   { background: var(--discuss); }
+  .dot.assess    { background: var(--assess); }
+  .dot.compare   { background: var(--compare); }
+  .dot.evaluate  { background: var(--evaluate); }
+  .dot.examine   { background: var(--examine); }
+
+  .lbl.identify  { color: var(--identify); }
+  .lbl.outline   { color: var(--outline); }
+  .lbl.describe  { color: var(--describe); }
+  .lbl.explain   { color: var(--explain); }
+  .lbl.analyse   { color: var(--analyse); }
+  .lbl.discuss   { color: var(--discuss); }
+  .lbl.assess    { color: var(--assess); }
+  .lbl.compare   { color: var(--compare); }
+  .lbl.evaluate  { color: var(--evaluate); }
+  .lbl.examine   { color: var(--examine); }
+
+  .ldef { font-size: 0.75rem; color: var(--text-muted); font-weight: 300; }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  @media (max-width: 760px) { .main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 260px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: #4e5670; }
+
+  .btn-row { display: flex; gap: 10px; }
+
+  button {
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 9px;
+    padding: 11px 22px;
+    transition: opacity 0.15s, transform 0.12s;
+  }
+  button:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #4f6ef7, #7c58ea);
+    color: #fff;
+    flex: 1;
+  }
+  .btn-clear {
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  .output-box {
+    min-height: 260px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.95rem;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .placeholder { color: #4e5670; font-style: italic; font-size: 0.88rem; }
+
+  .hl {
+    border-radius: 4px;
+    padding: 1px 3px;
+    font-weight: 600;
+    position: relative;
+    cursor: default;
+  }
+  .hl.identify  { color: #0d0d0d; background: var(--identify); }
+  .hl.outline   { color: #0d0d0d; background: var(--outline); }
+  .hl.describe  { color: #0d0d0d; background: var(--describe); }
+  .hl.explain   { color: #0d0d0d; background: var(--explain); }
+  .hl.analyse   { color: #fff;    background: var(--analyse); }
+  .hl.discuss   { color: #fff;    background: var(--discuss); }
+  .hl.assess    { color: #fff;    background: var(--assess); }
+  .hl.compare   { color: #0d0d0d; background: var(--compare); }
+  .hl.evaluate  { color: #fff;    background: var(--evaluate); }
+  .hl.examine   { color: #0d0d0d; background: var(--examine); }
+
+  .hl .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a2d3e;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    padding: 5px 10px;
+    border-radius: 7px;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 10;
+  }
+  .hl:hover .tooltip { visibility: visible; opacity: 1; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stat-chip {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 20px;
+    opacity: 0.9;
+  }
+  .stat-chip.identify  { background: var(--identify); color: #111; }
+  .stat-chip.outline   { background: var(--outline);  color: #111; }
+  .stat-chip.describe  { background: var(--describe); color: #111; }
+  .stat-chip.explain   { background: var(--explain);  color: #111; }
+  .stat-chip.analyse   { background: var(--analyse);  color: #fff; }
+  .stat-chip.discuss   { background: var(--discuss);  color: #fff; }
+  .stat-chip.assess    { background: var(--assess);   color: #fff; }
+  .stat-chip.compare   { background: var(--compare);  color: #111; }
+  .stat-chip.evaluate  { background: var(--evaluate); color: #fff; }
+  .stat-chip.examine   { background: var(--examine);  color: #111; }
+
+  .loading-dots span {
+    display: inline-block;
+    animation: blink 1.2s infinite;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.2; } 40% { opacity: 1; } }
+
+  .error-msg {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    background: rgba(255,80,80,0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(255,80,80,0.2);
+  }
+
+  .question-wrap {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+  }
+  .question-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 72px;
+  }
+  .question-input:focus { border-color: var(--accent); }
+  .question-input::placeholder { color: #4e5670; }
+
+  .detected-term {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    min-height: 28px;
+  }
+  .term-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  .term-pill .dot-sm { width: 8px; height: 8px; border-radius: 50%; }
+
+  .btn-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn-copy:hover { color: var(--text); border-color: var(--accent); }
+  .btn-copy.copied { color: #52d68a; border-color: #52d68a; }
+
+  .feedback-wrap {
+    max-width: 1100px;
+    margin: 20px auto 0;
+  }
+  .feedback-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    min-height: 60px;
+  }
+  .feedback-box.has-tip { border-color: rgba(79,110,247,.4); }
+  .feedback-box .tip-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: #8ba0f8;
+  }
+  .feedback-box p { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <p>A tool to ensure you are hitting the command term in the question.</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot identify"></div><span class="lbl identify">Identify</span><span class="ldef">— name/recognise</span></div>
+  <div class="legend-item"><div class="dot outline"></div><span class="lbl outline">Outline</span><span class="ldef">— main points only</span></div>
+  <div class="legend-item"><div class="dot describe"></div><span class="lbl describe">Describe</span><span class="ldef">— features &amp; characteristics</span></div>
+  <div class="legend-item"><div class="dot explain"></div><span class="lbl explain">Explain</span><span class="ldef">— reasons &amp; causes</span></div>
+  <div class="legend-item"><div class="dot analyse"></div><span class="lbl analyse">Analyse</span><span class="ldef">— break down &amp; examine</span></div>
+  <div class="legend-item"><div class="dot discuss"></div><span class="lbl discuss">Discuss</span><span class="ldef">— examine perspectives</span></div>
+  <div class="legend-item"><div class="dot assess"></div><span class="lbl assess">Assess</span><span class="ldef">— judge &amp; weigh</span></div>
+  <div class="legend-item"><div class="dot compare"></div><span class="lbl compare">Compare</span><span class="ldef">— similarities &amp; differences</span></div>
+  <div class="legend-item"><div class="dot evaluate"></div><span class="lbl evaluate">Evaluate</span><span class="ldef">— evidence-based judgement</span></div>
+  <div class="legend-item"><div class="dot examine"></div><span class="lbl examine">Examine</span><span class="ldef">— inquire in detail</span></div>
+</div>
+
+<div class="question-wrap">
+  <div class="panel">
+    <div class="panel-label">Your Exam Question</div>
+    <textarea class="question-input" id="questionText" placeholder="Type or paste your exam question here e.g. 'Describe the acute responses of the cardiovascular system to exercise. (4 marks)'"></textarea>
+    <div class="detected-term" id="detectedTerm">
+      <span>Command term in your question:</span>
+      <span id="termPill" style="color:var(--text-muted);font-style:italic">none yet — enter your question above</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="panel">
+    <div class="panel-label">Your Response</div>
+    <textarea id="inputText" placeholder="Type or paste your response here…"></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" id="analyseBtn" onclick="analyseText()">Check My Response</button>
+      <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="panel-label">Colour-Coded Output</div>
+      <button class="btn-copy" id="copyBtn" onclick="copyOutput()" title="Copy with colours" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span id="copyLabel">Copy</span>
+      </button>
+    </div>
+    <div class="output-box" id="outputBox">
+      <span class="placeholder">Your colour-coded response will appear here…</span>
+    </div>
+    <div class="stats" id="statsRow"></div>
+  </div>
+</div>
+
+<div class="feedback-wrap" id="feedbackWrap" style="display:none">
+  <div class="panel">
+    <div class="panel-label">💡 How to Hit the Command Term</div>
+    <div class="feedback-box" id="feedbackBox"></div>
+  </div>
+</div>
+
+<script>
+const DEFINITIONS = {
+  identify: "Identify — recognise and name a feature, fact, or concept",
+  outline:  "Outline — provide the main points without detail",
+  describe: "Describe — state the characteristics or features",
+  explain:  "Explain — provide reasons or causes; make relationships clear",
+  analyse:  "Analyse — break down and examine components/relationships",
+  discuss:  "Discuss — explore multiple perspectives, arguments or viewpoints",
+  assess:   "Assess — make a judgement about value, importance or quality",
+  compare:  "Compare — identify similarities AND differences",
+  evaluate: "Evaluate — make a judgement based on criteria and evidence",
+  examine:  "Examine — inquire into something in detail"
+};
+
+const TERM_ORDER = ['evaluate','discuss','assess','compare','analyse','examine','explain','describe','outline','identify'];
+
+const TERM_COLOURS = {
+  identify:  { bg: 'var(--identify)',  text: '#111' },
+  outline:   { bg: 'var(--outline)',   text: '#111' },
+  describe:  { bg: 'var(--describe)',  text: '#111' },
+  explain:   { bg: 'var(--explain)',   text: '#111' },
+  analyse:   { bg: 'var(--analyse)',   text: '#fff' },
+  discuss:   { bg: 'var(--discuss)',   text: '#fff' },
+  assess:    { bg: 'var(--assess)',    text: '#fff' },
+  compare:   { bg: 'var(--compare)',   text: '#111' },
+  evaluate:  { bg: 'var(--evaluate)', text: '#fff' },
+  examine:   { bg: 'var(--examine)',   text: '#111' },
+};
+
+function detectTermsFromQuestion(q) {
+  const lower = q.toLowerCase();
+  return TERM_ORDER.filter(t => new RegExp('\\b' + t + '(?:s|d|ing)?\\b').test(lower));
+}
+
+function updateTermPill() {
+  const q = document.getElementById('questionText').value;
+  const terms = detectTermsFromQuestion(q);
+  const pill = document.getElementById('termPill');
+  if (!terms.length) {
+    pill.innerHTML = '<span style="color:var(--text-muted);font-style:italic">no command term detected</span>';
+    return;
+  }
+  pill.innerHTML = terms.map(t => {
+    const c = TERM_COLOURS[t];
+    return `<span class="term-pill" style="background:${c.bg};color:${c.text}"><span class="dot-sm" style="background:${c.text === '#fff' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)'}"></span>${cap(t)}</span>`;
+  }).join(' ');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('questionText').addEventListener('input', updateTermPill);
+});
+
+async function analyseText() {
+  const text = document.getElementById('inputText').value.trim();
+  const question = document.getElementById('questionText').value.trim();
+  if (!text) return;
+
+  const detectedTerms = detectTermsFromQuestion(question);
+  const primaryTerm = detectedTerms[0] || null;
+
+  const btn = document.getElementById('analyseBtn');
+  const out = document.getElementById('outputBox');
+  const stats = document.getElementById('statsRow');
+
+  btn.disabled = true;
+  stats.innerHTML = '';
+  out.innerHTML = '<span class="loading-dots"><span>●</span><span>●</span><span>●</span></span>';
+
+  const focusNote = primaryTerm
+    ? `\n\nIMPORTANT: The exam question uses the command term "${primaryTerm.toUpperCase()}". Pay particular attention to whether the student is demonstrating "${primaryTerm}" — this should be the dominant term if answering correctly.`
+    : '';
+
+  const systemPrompt = `You are an expert NESA NSW HSC Health and Movement Science examiner.
+${question ? `The exam question is: "${question}"` : ''}
+Analyse the student's extended response and identify which sentences or phrases demonstrate each of these NESA command terms:
+
+- identify: names, recognises, or states a fact/concept/feature. Lowest level — a simple statement of WHAT something is. Tag every sentence/phrase where the student names or states something, even without explanation.
+- outline: provides only the main points or a brief overview without detail
+- describe: states characteristics, features, or properties of something in detail
+- explain: provides reasons, causes, or mechanisms using connective language (because, therefore, this means, as a result, which leads to, due to)
+- analyse: breaks down components, examines relationships in depth, links ideas using evidence to draw conclusions
+- discuss: explores multiple perspectives, weighs arguments, considers pros and cons, or examines different viewpoints
+- assess: makes a judgement about value, importance or quality, weighing up factors
+- compare: identifies similarities AND differences between two or more things
+- evaluate: makes an evidence-based judgement using criteria; reaches a conclusion
+- examine: inquires in detail into a topic, considers it closely
+${focusNote}
+
+DETECTION RULES:
+1. Tag each sentence/phrase with the HIGHEST command term level it demonstrates.
+2. For IDENTIFY: tag any sentence/phrase where the student simply names, states, or lists something. Plain factual statements count. Tag the full sentence.
+3. Use exact substrings from the input. Do not modify text. Do not overlap entries.
+${primaryTerm ? `
+FEEDBACK RULE: After analysing, check whether the student demonstrated "${primaryTerm}". If they have NOT, write a "feedback" string of no more than 100 words explaining specifically HOW to achieve "${primaryTerm}" for this question and topic. Write directly to the student using "you". If they HAVE demonstrated it, set "feedback" to null.` : ''}
+
+Return ONLY a valid JSON object:
+{ "annotations": [ { "text": "<exact substring>", "term": "<term>" } ], "feedback": "<tip or null>" }`;
+
+  try {
+    // ── Calls our Netlify function, which securely adds the API key ──
+    const resp = await fetch('/.netlify/functions/analyse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: systemPrompt + '\n\nStudent response to analyse:\n\n' + text }]
+      })
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      throw new Error(`Server error ${resp.status}: ${errBody}`);
+    }
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+    const raw = data.content.map(b => b.text || '').join('');
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON found in response.');
+    const result = JSON.parse(jsonMatch[0]);
+    const annotations = result.annotations || [];
+
+    renderHighlighted(text, annotations);
+    renderStats(annotations, primaryTerm);
+    renderFeedback(result.feedback || null, primaryTerm);
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">⚠️ Analysis failed — ${escHtml(e.message)}<br><small>Check your connection and try again.</small></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderFeedback(feedback, primaryTerm) {
+  const wrap = document.getElementById('feedbackWrap');
+  const box  = document.getElementById('feedbackBox');
+  if (!primaryTerm || !feedback) {
+    wrap.style.display = 'none';
+    return;
+  }
+  const c = TERM_COLOURS[primaryTerm];
+  const pill = `<span class="term-pill" style="background:${c.bg};color:${c.text};font-size:0.75rem;padding:2px 9px">${cap(primaryTerm)}</span>`;
+  box.className = 'feedback-box has-tip';
+  box.innerHTML = `<div class="tip-label">Your response doesn't yet demonstrate ${pill} — here's how:</div><p>${escHtml(feedback)}</p>`;
+  wrap.style.display = 'block';
+}
+
+function renderHighlighted(text, annotations) {
+  const ranges = [];
+  for (const ann of annotations) {
+    if (!ann.text) continue;
+    const idx = text.indexOf(ann.text);
+    if (idx === -1) continue;
+    const end = idx + ann.text.length;
+    const overlaps = ranges.some(r => !(end <= r.start || idx >= r.end));
+    if (!overlaps) ranges.push({ start: idx, end, term: ann.term });
+  }
+  ranges.sort((a, b) => a.start - b.start);
+
+  let html = '';
+  let cursor = 0;
+  for (const r of ranges) {
+    if (r.start > cursor) html += escHtml(text.slice(cursor, r.start));
+    html += `<span class="hl ${r.term}">${escHtml(text.slice(r.start, r.end))}<span class="tooltip">${DEFINITIONS[r.term] || r.term}</span></span>`;
+    cursor = r.end;
+  }
+  if (cursor < text.length) html += escHtml(text.slice(cursor));
+
+  document.getElementById('outputBox').innerHTML = html || '<span class="placeholder">No command term demonstrations detected.</span>';
+  document.getElementById('copyBtn').style.display = 'inline-flex';
+}
+
+function renderStats(annotations, primaryTerm) {
+  const counts = {};
+  for (const a of annotations) counts[a.term] = (counts[a.term] || 0) + 1;
+  document.getElementById('statsRow').innerHTML = Object.entries(counts)
+    .map(([term, n]) => {
+      const req = term === primaryTerm ? ' <span style="font-size:.65rem;opacity:.75">★ required</span>' : '';
+      return `<span class="stat-chip ${term}">${cap(term)}: ${n}${req}</span>`;
+    }).join('');
+}
+
+function copyOutput() {
+  const box = document.getElementById('outputBox');
+  const COLOURS = {
+    identify: { bg: '#f5c842', text: '#0d0d0d' },
+    outline:  { bg: '#52d68a', text: '#0d0d0d' },
+    describe: { bg: '#5bc8f5', text: '#0d0d0d' },
+    explain:  { bg: '#f08050', text: '#0d0d0d' },
+    analyse:  { bg: '#b57cf7', text: '#ffffff' },
+    discuss:  { bg: '#f76fa8', text: '#ffffff' },
+    assess:   { bg: '#e040fb', text: '#ffffff' },
+    compare:  { bg: '#42d4c8', text: '#0d0d0d' },
+    evaluate: { bg: '#e84545', text: '#ffffff' },
+    examine:  { bg: '#a8d848', text: '#0d0d0d' },
+  };
+  const clone = box.cloneNode(true);
+  clone.querySelectorAll('.tooltip').forEach(t => t.remove());
+  clone.querySelectorAll('.hl').forEach(span => {
+    const term = [...span.classList].find(c => COLOURS[c]);
+    if (term) {
+      const c = COLOURS[term];
+      span.style.cssText = `background-color:${c.bg};color:${c.text};padding:1px 4px;border-radius:3px;font-weight:bold;`;
+    }
+  });
+  const tmp = document.createElement('div');
+  tmp.contentEditable = 'true';
+  tmp.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;white-space:pre-wrap;font-family:sans-serif;font-size:14px;';
+  tmp.innerHTML = clone.innerHTML;
+  document.body.appendChild(tmp);
+  const range = document.createRange();
+  range.selectNodeContents(tmp);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  let success = false;
+  try { success = document.execCommand('copy'); } catch(e) {}
+  sel.removeAllRanges();
+  document.body.removeChild(tmp);
+  if (success) {
+    flashCopied();
+  } else {
+    navigator.clipboard.writeText(box.innerText || box.textContent).then(flashCopied).catch(() => {
+      alert('Copy failed — select the text manually and press Ctrl+C / Cmd+C.');
+    });
+  }
+}
+
+function flashCopied() {
+  const btn = document.getElementById('copyBtn');
+  const lbl = document.getElementById('copyLabel');
+  btn.classList.add('copied');
+  lbl.textContent = 'Copied!';
+  setTimeout(() => { btn.classList.remove('copied'); lbl.textContent = 'Copy'; }, 2000);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+function cap(s) { return s[0].toUpperCase() + s.slice(1); }
+
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('questionText').value = '';
+  document.getElementById('outputBox').innerHTML = '<span class="placeholder">Your colour-coded response will appear here…</span>';
+  document.getElementById('copyBtn').style.display = 'none';
+  document.getElementById('copyLabel').textContent = 'Copy';
+  document.getElementById('statsRow').innerHTML = '';
+  document.getElementById('termPill').innerHTML = '<span style="color:var(--text-muted);font-style:italic">none yet — type the question above</span>';
+  document.getElementById('feedbackWrap').style.display = 'none';
+  document.getElementById('feedbackBox').className = 'feedback-box';
+}
+</script>
+</body>
+</html>
