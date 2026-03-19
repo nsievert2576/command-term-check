@@ -15,7 +15,7 @@
     --text-muted: #8890a8;
     --accent: #4f6ef7;
 
-    --identify:   #f5c842;
+    --keyterm:    #f5c842;
     --outline:    #52d68a;
     --describe:   #5bc8f5;
     --explain:    #f08050;
@@ -66,7 +66,7 @@
   .legend-item:hover { transform: translateY(-2px); }
 
   .dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
-  .dot.identify  { background: var(--identify); }
+  .dot.keyterm   { background: var(--keyterm); }
   .dot.outline   { background: var(--outline); }
   .dot.describe  { background: var(--describe); }
   .dot.explain   { background: var(--explain); }
@@ -77,7 +77,7 @@
   .dot.evaluate  { background: var(--evaluate); }
   .dot.examine   { background: var(--examine); }
 
-  .lbl.identify  { color: var(--identify); }
+  .lbl.keyterm   { color: var(--keyterm); }
   .lbl.outline   { color: var(--outline); }
   .lbl.describe  { color: var(--describe); }
   .lbl.explain   { color: var(--explain); }
@@ -182,7 +182,7 @@
     position: relative;
     cursor: default;
   }
-  .hl.identify  { color: #0d0d0d; background: var(--identify); }
+  .hl.keyterm   { color: #0d0d0d; background: var(--keyterm); }
   .hl.outline   { color: #0d0d0d; background: var(--outline); }
   .hl.describe  { color: #0d0d0d; background: var(--describe); }
   .hl.explain   { color: #0d0d0d; background: var(--explain); }
@@ -222,7 +222,7 @@
     border-radius: 20px;
     opacity: 0.9;
   }
-  .stat-chip.identify  { background: var(--identify); color: #111; }
+  .stat-chip.keyterm   { background: var(--keyterm); color: #111; }
   .stat-chip.outline   { background: var(--outline);  color: #111; }
   .stat-chip.describe  { background: var(--describe); color: #111; }
   .stat-chip.explain   { background: var(--explain);  color: #111; }
@@ -342,11 +342,12 @@
 <body>
 
 <header>
-  <p>A tool to ensure you are hitting the command term in the question.</p>
+  <p>A tool to ensure you are hitting the command term in the question in HMS.</p>
 </header>
 
 <div class="legend">
   <div class="legend-item"><div class="dot identify"></div><span class="lbl identify">Identify</span><span class="ldef">— name/recognise</span></div>
+  <div class="legend-item"><div class="dot keyterm"></div><span class="lbl keyterm">Key Terminology</span><span class="ldef">— HMS syllabus terms</span></div>
   <div class="legend-item"><div class="dot outline"></div><span class="lbl outline">Outline</span><span class="ldef">— main points only</span></div>
   <div class="legend-item"><div class="dot describe"></div><span class="lbl describe">Describe</span><span class="ldef">— features &amp; characteristics</span></div>
   <div class="legend-item"><div class="dot explain"></div><span class="lbl explain">Explain</span><span class="ldef">— reasons &amp; causes</span></div>
@@ -403,7 +404,7 @@
 
 <script>
 const DEFINITIONS = {
-  identify: "Identify — recognise and name a feature, fact, or concept",
+  keyterm:  "Key Terminology — correct use of HMS syllabus terms",
   outline:  "Outline — provide the main points without detail",
   describe: "Describe — state the characteristics or features",
   explain:  "Explain — provide reasons or causes; make relationships clear",
@@ -415,10 +416,10 @@ const DEFINITIONS = {
   examine:  "Examine — inquire into something in detail"
 };
 
-const TERM_ORDER = ['evaluate','discuss','assess','compare','analyse','examine','explain','describe','outline','identify'];
+const TERM_ORDER = ['evaluate','discuss','assess','compare','analyse','examine','explain','describe','outline'];
 
 const TERM_COLOURS = {
-  identify:  { bg: 'var(--identify)',  text: '#111' },
+  keyterm:   { bg: 'var(--keyterm)',   text: '#111' },
   outline:   { bg: 'var(--outline)',   text: '#111' },
   describe:  { bg: 'var(--describe)',  text: '#111' },
   explain:   { bg: 'var(--explain)',   text: '#111' },
@@ -475,9 +476,9 @@ async function analyseText() {
 
   const systemPrompt = `You are an expert NESA NSW HSC Health and Movement Science examiner.
 ${question ? `The exam question is: "${question}"` : ''}
-Analyse the student's extended response and identify which sentences or phrases demonstrate each of these NESA command terms:
+Analyse the student's extended response and return two types of annotations:
 
-- identify: names, recognises, or states a fact/concept/feature. Lowest level — a simple statement of WHAT something is. Tag every sentence/phrase where the student names or states something, even without explanation.
+1. COMMAND TERMS — tag sentences or phrases that demonstrate these NESA command terms:
 - outline: provides only the main points or a brief overview without detail
 - describe: states characteristics, features, or properties of something in detail
 - explain: provides reasons, causes, or mechanisms using connective language (because, therefore, this means, as a result, which leads to, due to)
@@ -489,15 +490,17 @@ Analyse the student's extended response and identify which sentences or phrases 
 - examine: inquires in detail into a topic, considers it closely
 ${focusNote}
 
+2. KEY TERMINOLOGY — separately tag individual HMS syllabus key terms used correctly anywhere in the response. These are specific technical words or phrases from the Health and Movement Science syllabus, such as: VO2 max, lactate threshold, ATP-PC system, glycolytic system, aerobic system, cardiac output, stroke volume, heart rate, tidal volume, minute ventilation, EPOC, muscle fibre types, sliding filament theory, force-velocity relationship, length-tension relationship, periodisation, overload, specificity, reversibility, progressive overload, hypertrophy, atrophy, neuromuscular, proprioception, motor unit, fast twitch, slow twitch, energy systems, phosphocreatine, lactic acid, oxygen debt, vasodilation, vasoconstriction, redistribution of blood flow, venous return, starling's law, biomechanics, kinematics, kinetics, centre of mass, ground reaction force, projectile motion, angular momentum, acute response, chronic adaptation, fatigue, recovery, thermoregulation, dehydration, altitude training. Tag the exact term only (not the whole sentence).
+
 DETECTION RULES:
-1. Tag each sentence/phrase with the HIGHEST command term level it demonstrates.
-2. For IDENTIFY: tag any sentence/phrase where the student simply names, states, or lists something. Plain factual statements count. Tag the full sentence.
-3. Use exact substrings from the input. Do not modify text. Do not overlap entries.
+1. For command terms: tag each sentence/phrase with the HIGHEST command term level it demonstrates. Use exact substrings. No overlaps between annotations.
+2. For key terminology: tag only the specific term word/phrase itself. A term can be tagged even if it is already inside a command term annotation — in that case skip it to avoid overlap.
+3. Do not overlap any two annotations.
 ${primaryTerm ? `
 FEEDBACK RULE: After analysing, check whether the student demonstrated "${primaryTerm}". If they have NOT, write a "feedback" string of no more than 100 words explaining specifically HOW to achieve "${primaryTerm}" for this question and topic. Write directly to the student using "you". If they HAVE demonstrated it, set "feedback" to null.` : ''}
 
 Return ONLY a valid JSON object:
-{ "annotations": [ { "text": "<exact substring>", "term": "<term>" } ], "feedback": "<tip or null>" }`;
+{ "annotations": [ { "text": "<exact substring>", "term": "<command term name or 'keyterm'>" } ], "feedback": "<tip or null>" }`;
 
   try {
     // ── Calls our Netlify function, which securely adds the API key ──
@@ -579,15 +582,16 @@ function renderStats(annotations, primaryTerm) {
   for (const a of annotations) counts[a.term] = (counts[a.term] || 0) + 1;
   document.getElementById('statsRow').innerHTML = Object.entries(counts)
     .map(([term, n]) => {
+      const label = term === 'keyterm' ? 'Key Terminology' : cap(term);
       const req = term === primaryTerm ? ' <span style="font-size:.65rem;opacity:.75">★ required</span>' : '';
-      return `<span class="stat-chip ${term}">${cap(term)}: ${n}${req}</span>`;
+      return `<span class="stat-chip ${term}">${label}: ${n}${req}</span>`;
     }).join('');
 }
 
 function copyOutput() {
   const box = document.getElementById('outputBox');
   const COLOURS = {
-    identify: { bg: '#f5c842', text: '#0d0d0d' },
+    keyterm:  { bg: '#f5c842', text: '#0d0d0d' },
     outline:  { bg: '#52d68a', text: '#0d0d0d' },
     describe: { bg: '#5bc8f5', text: '#0d0d0d' },
     explain:  { bg: '#f08050', text: '#0d0d0d' },
